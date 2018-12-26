@@ -2,24 +2,6 @@
 # and its dependencies with the aid of the Mix.Config module.
 use Mix.Config
 
-config :kv, :tds_dev,
-  # hostname: "DevSql4\\trunk",
-  hostname: "DEVSQL4.ts.com",
-  instance: "trunk",
-  username: "sasql",
-  password: "#Lockbox45!",
-  database: "SmartCatalogSiteCore_Master",
-  port: 1433,
-  pool_size: 10
-
-config :kv, :tds_staging,
-  hostname: "54.172.11.61",
-  username: "sa",
-  password: "Barn1234!",
-  database: "SmartCatalogSiteCore_Master",
-  port: 1433,
-  pool_size: 10
-
 # This configuration is loaded before any dependency and is restricted
 # to this project. If another project depends on this project, this
 # file won't be loaded nor affect the parent project. For this reason,
