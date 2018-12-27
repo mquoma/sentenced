@@ -1,9 +1,6 @@
 guitar
 path
 steam
-guitar
-path
-steam
 challenge
 convulsion
 sweat

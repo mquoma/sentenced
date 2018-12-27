@@ -7,7 +7,7 @@ defmodule GameServer do
   # Client
   def start_link(data) do
     case data do
-      [] -> GenServer.start_link(__MODULE__, %Game{players: [], deck: load_words()})
+      [] -> GenServer.start_link(__MODULE__, %Game{players: [], deck: load_words()}, name: MyGame)
       list -> GenServer.start_link(__MODULE__, %Game{players: [], deck: list})
     end
   end
@@ -41,6 +41,10 @@ defmodule GameServer do
       hand ->
         GenServer.cast(pid, {:add_player, %Player{name: name, cards: hand}})
     end
+  end
+
+  def meld_card(pid, name, card) do
+    GenServer.cast(pid, {:meld_card, name, card})
   end
 
   def get_player(pid, name) do
@@ -78,6 +82,23 @@ defmodule GameServer do
     {:noreply, %Game{players: [player | players], deck: deck}}
   end
 
+  def handle_cast({:meld_card, name, card}, %Game{players: players, deck: deck} = game) do
+    %Player{cards: cards, meld: meld} = players |> Enum.filter(&(&1.name == name)) |> List.first()
+
+    cards
+    |> Enum.split_with(&(&1 == card))
+    |> case do
+      {[], cards} ->
+        {:noreply, game}
+
+      {c, cards} ->
+        player = %Player{name: name, cards: cards, meld: [c |> List.first() | meld]}
+
+        {:noreply,
+         %Game{deck: deck, players: [player | players |> Enum.filter(&(&1.name != name))]}}
+    end
+  end
+
   def handle_call({:get_player, name}, _from, %Game{players: players} = game) do
     player = players |> Enum.filter(&(&1.name == name)) |> List.first()
     {:reply, player, game}
@@ -103,6 +124,7 @@ defmodule GameServer do
 
     file
     |> String.split("\r\n")
+    |> Enum.dedup()
     |> Enum.take(@deck_size)
   end
 end
