@@ -5,11 +5,8 @@ defmodule GameServer do
   @hand_size 10
 
   # Client
-  def start_link(data) do
-    case data do
-      [] -> GenServer.start_link(__MODULE__, %Game{players: [], deck: load_words()}, name: MyGame)
-      list -> GenServer.start_link(__MODULE__, %Game{players: [], deck: list})
-    end
+  def start_link(opts) do
+    GenServer.start_link(__MODULE__, %Game{players: [], deck: load_words()}, opts)
   end
 
   def start_link(_) do
