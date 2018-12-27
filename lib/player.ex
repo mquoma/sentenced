@@ -1,6 +1,7 @@
 defmodule Player do
   defstruct name: "",
-    cards: []
+            cards: [],
+            meld: []
 
   use Vex.Struct
   validates(:name, string: true)

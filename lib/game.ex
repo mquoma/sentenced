@@ -1,7 +1,7 @@
 defmodule Game do
   defstruct name: nil,
-    deck: [],
-    players: []
+            deck: [],
+            players: []
 
-    use Vex.Struct
+  use Vex.Struct
 end

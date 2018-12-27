@@ -32,7 +32,7 @@ defmodule GameServer do
     GenServer.call(pid, :get)
   end
 
-  def add_player(pid, %Player{cards: cards, name: name}) do
+  def add_player(pid, name) do
     GenServer.call(pid, :draw_hand)
     |> case do
       [] ->
