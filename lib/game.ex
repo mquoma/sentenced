@@ -1,5 +1,5 @@
 defmodule Game do
-  defstruct name: nil,
+  defstruct name: "",
             deck: [],
             players: []
 
