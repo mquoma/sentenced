@@ -3,5 +3,8 @@ defmodule Card do
             points: 5
 
   use Vex.Struct
-  validates(:points, integer: true)
+
+  validates(:word, presence: [message: "required"])
+
+  validates(:points, number: [message: "non-negative", min: 0])
 end

@@ -121,13 +121,13 @@ defmodule GameServer do
   end
 
   @impl true
-  def handle_cast({:discard, card}, %Game{deck: deck, players: players}) do
-    {:noreply, %Game{players: players, deck: [card | deck]}}
+  def handle_cast({:discard, card}, %Game{deck: deck} = game) do
+    {:noreply, %Game{game | deck: [card | deck]}}
   end
 
   @impl true
-  def handle_cast({:add_player, player}, %Game{deck: deck, players: players}) do
-    {:noreply, %Game{players: [player | players], deck: deck}}
+  def handle_cast({:add_player, player}, %Game{players: players} = game) do
+    {:noreply, %Game{game | players: [player | players]}}
   end
 
   @impl true

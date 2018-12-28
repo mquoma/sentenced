@@ -5,5 +5,11 @@ defmodule Player do
             score: 0
 
   use Vex.Struct
-  validates(:name, string: true)
+
+  validates(:name,
+    presence: [message: "required"],
+    length: [min: 3, message: "at least three chars"]
+  )
+
+  validates(:score, number: true)
 end

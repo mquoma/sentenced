@@ -4,4 +4,6 @@ defmodule Game do
             players: []
 
   use Vex.Struct
+
+  validates(:name, presence: [message: "required"])
 end
