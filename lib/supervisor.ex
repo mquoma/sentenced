@@ -8,7 +8,8 @@ defmodule App.Supervisor do
   def init(:ok) do
     children = [
       {App.Registry, name: Registry},
-      {App.GameServer, name: GameServer}
+      Supervisor.child_spec({App.GameServer, name: GameServer}, id: :game1),
+      Supervisor.child_spec({App.GameServer, name: GameServer2}, id: :game2)
     ]
 
     Supervisor.init(children, strategy: :one_for_one)
