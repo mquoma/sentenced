@@ -29,6 +29,18 @@ defmodule GameServer do
     GenServer.call(pid, :get)
   end
 
+  def get_player(pid, name) do
+    GenServer.call(pid, {:get_player, name})
+  end
+
+  def get_leaders(pid) do
+    GenServer.call(pid, :get_leaders)
+  end
+
+  def get_score(pid, name) do
+    GenServer.call(pid, {:get_score, name})
+  end
+
   def add_player(pid, name) do
     GenServer.call(pid, :draw_hand)
     |> case do
@@ -40,8 +52,8 @@ defmodule GameServer do
     end
   end
 
-  def meld_card(pid, name, card) do
-    GenServer.cast(pid, {:meld_card, name, card})
+  def meld_card(pid, name, word) do
+    GenServer.cast(pid, {:meld_card, name, word})
   end
 
   def upvote(pid, name) do
@@ -50,14 +62,6 @@ defmodule GameServer do
 
   def downvote(pid, name) do
     GenServer.cast(pid, {:downvote, name})
-  end
-
-  def get_player(pid, name) do
-    GenServer.call(pid, {:get_player, name})
-  end
-
-  def get_leaders(pid) do
-    GenServer.call(pid, :get_leaders)
   end
 
   # Callbacks
@@ -70,7 +74,7 @@ defmodule GameServer do
   # Deck
 
   @impl true
-  def handle_call(:draw_card, _from, %Game{deck: [], players: players} = game) do
+  def handle_call(:draw_card, _from, %Game{deck: []} = game) do
     {:reply, :no_cards, game}
   end
 
@@ -93,6 +97,13 @@ defmodule GameServer do
   @impl true
   def handle_call(:get, _from, %Game{} = game) do
     {:reply, game, game}
+  end
+
+  @impl true
+  def handle_call({:get_score, name}, _from, %Game{players: players} = game) do
+    score = players |> find_player(name) |> Map.get(:meld) |> Enum.map(& &1.points) |> Enum.sum()
+
+    {:reply, score, game}
   end
 
   @impl true
@@ -136,11 +147,11 @@ defmodule GameServer do
   end
 
   @impl true
-  def handle_cast({:meld_card, name, card}, %Game{players: players} = game) do
+  def handle_cast({:meld_card, name, word}, %Game{players: players} = game) do
     %Player{cards: cards, meld: meld} = players |> find_player(name)
 
     cards
-    |> Enum.split_with(&(&1 == card))
+    |> Enum.split_with(&(&1.word == word))
     |> case do
       {[], _cards} ->
         {:noreply, game}
@@ -161,6 +172,11 @@ defmodule GameServer do
     |> String.split("\r\n")
     |> Enum.dedup()
     |> Enum.take(@deck_size)
+    |> Enum.map(&create_card/1)
+  end
+
+  defp create_card(str) do
+    %Card{word: str, points: String.length(str) * 5}
   end
 
   defp find_player(players, name) do
