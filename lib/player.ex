@@ -1,4 +1,4 @@
-defmodule Player do
+defmodule App.Player do
   defstruct name: "",
             cards: [],
             meld: [],

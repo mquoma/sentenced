@@ -1,5 +1,7 @@
-defmodule GameServer do
+defmodule App.GameServer do
   use GenServer
+
+  alias App.{Game, Player, Card}
 
   @deck_size 50
   @hand_size 10

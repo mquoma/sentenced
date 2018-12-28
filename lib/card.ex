@@ -1,4 +1,4 @@
-defmodule Card do
+defmodule App.Card do
   defstruct word: "",
             points: 5
 

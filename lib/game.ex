@@ -1,4 +1,4 @@
-defmodule Game do
+defmodule App.Game do
   defstruct name: "",
             deck: [],
             players: []
