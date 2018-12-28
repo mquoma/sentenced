@@ -1,4 +1,4 @@
-defmodule KV.Registry do
+defmodule App.Registry do
   use GenServer
 
   def start_link(opts) do
@@ -33,7 +33,7 @@ defmodule KV.Registry do
     if Map.has_key?(names, name) do
       {:noreply, names}
     else
-      {:ok, bucket} = KV.Bucket.start_link([])
+      {:ok, bucket} = App.Bucket.start_link([])
       {:noreply, Map.put(names, name, bucket)}
     end
   end

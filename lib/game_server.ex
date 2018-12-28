@@ -1,5 +1,7 @@
-defmodule GameServer do
+defmodule App.GameServer do
   use GenServer
+
+  alias App.{Game, Player, Card}
 
   @deck_size 50
   @hand_size 10
@@ -29,6 +31,18 @@ defmodule GameServer do
     GenServer.call(pid, :get)
   end
 
+  def get_player(pid, name) do
+    GenServer.call(pid, {:get_player, name})
+  end
+
+  def get_leaders(pid) do
+    GenServer.call(pid, :get_leaders)
+  end
+
+  def get_score(pid, name) do
+    GenServer.call(pid, {:get_score, name})
+  end
+
   def add_player(pid, name) do
     GenServer.call(pid, :draw_hand)
     |> case do
@@ -40,12 +54,16 @@ defmodule GameServer do
     end
   end
 
-  def meld_card(pid, name, card) do
-    GenServer.cast(pid, {:meld_card, name, card})
+  def meld_card(pid, name, word) do
+    GenServer.cast(pid, {:meld_card, name, word})
   end
 
-  def get_player(pid, name) do
-    GenServer.call(pid, {:get_player, name})
+  def upvote(pid, name) do
+    GenServer.cast(pid, {:upvote, name})
+  end
+
+  def downvote(pid, name) do
+    GenServer.cast(pid, {:downvote, name})
   end
 
   # Callbacks
@@ -58,7 +76,7 @@ defmodule GameServer do
   # Deck
 
   @impl true
-  def handle_call(:draw_card, _from, %Game{deck: [], players: players} = game) do
+  def handle_call(:draw_card, _from, %Game{deck: []} = game) do
     {:reply, :no_cards, game}
   end
 
@@ -67,51 +85,84 @@ defmodule GameServer do
     {:reply, card, %Game{deck: tail, players: players}}
   end
 
-  @impl true
-  def handle_cast({:discard, card}, %Game{deck: deck, players: players}) do
-    {:noreply, %Game{players: players, deck: [card | deck]}}
-  end
-
-  # Player
-
-  @impl true
-  def handle_cast({:add_player, player}, %Game{deck: deck, players: players}) do
-    {:noreply, %Game{players: [player | players], deck: deck}}
-  end
-
-  def handle_cast({:meld_card, name, card}, %Game{players: players, deck: deck} = game) do
-    %Player{cards: cards, meld: meld} = players |> Enum.filter(&(&1.name == name)) |> List.first()
-
-    cards
-    |> Enum.split_with(&(&1 == card))
-    |> case do
-      {[], cards} ->
-        {:noreply, game}
-
-      {c, cards} ->
-        player = %Player{name: name, cards: cards, meld: [c |> List.first() | meld]}
-
-        {:noreply,
-         %Game{deck: deck, players: [player | players |> Enum.filter(&(&1.name != name))]}}
-    end
-  end
-
   def handle_call({:get_player, name}, _from, %Game{players: players} = game) do
     player = players |> Enum.filter(&(&1.name == name)) |> List.first()
     {:reply, player, game}
   end
 
   @impl true
-  def handle_call(:draw_hand, _from, %Game{deck: deck, players: players} = game) do
+  def handle_call(:draw_hand, _from, %Game{deck: deck, players: players} = _game) do
     {hand, rest} = Enum.split(deck, @hand_size)
     {:reply, hand, %Game{deck: rest, players: players}}
   end
 
-  # Game
-
   @impl true
   def handle_call(:get, _from, %Game{} = game) do
     {:reply, game, game}
+  end
+
+  @impl true
+  def handle_call({:get_score, name}, _from, %Game{players: players} = game) do
+    score = players |> find_player(name) |> Map.get(:meld) |> Enum.map(& &1.points) |> Enum.sum()
+
+    {:reply, score, game}
+  end
+
+  @impl true
+  def handle_call(:get_leaders, _from, %Game{players: players} = game) do
+    results =
+      players
+      |> Enum.group_by(& &1.score)
+      |> Map.to_list()
+      |> Enum.sort_by(&(&1 |> elem(0)))
+      |> List.last()
+      |> elem(1)
+      |> Enum.map(& &1.name)
+
+    {:reply, results, game}
+  end
+
+  @impl true
+  def handle_cast({:discard, card}, %Game{deck: deck} = game) do
+    {:noreply, %Game{game | deck: [card | deck]}}
+  end
+
+  @impl true
+  def handle_cast({:add_player, player}, %Game{players: players} = game) do
+    {:noreply, %Game{game | players: [player | players]}}
+  end
+
+  @impl true
+  def handle_cast({:upvote, name}, %Game{players: players} = game) do
+    player = players |> find_player(name)
+    player = %Player{player | score: player.score + 1}
+
+    {:noreply, %Game{game | players: [player | players |> Enum.filter(&(&1.name != name))]}}
+  end
+
+  @impl true
+  def handle_cast({:downvote, name}, %Game{players: players} = game) do
+    player = players |> find_player(name)
+    player = %Player{player | score: player.score - 1}
+
+    {:noreply, %Game{game | players: [player | players |> Enum.filter(&(&1.name != name))]}}
+  end
+
+  @impl true
+  def handle_cast({:meld_card, name, word}, %Game{players: players} = game) do
+    %Player{cards: cards, meld: meld} = players |> find_player(name)
+
+    cards
+    |> Enum.split_with(&(&1.word == word))
+    |> case do
+      {[], _cards} ->
+        {:noreply, game}
+
+      {c, cards} ->
+        player = %Player{name: name, cards: cards, meld: [c |> List.first() | meld]}
+
+        {:noreply, %Game{game | players: [player | players |> Enum.filter(&(&1.name != name))]}}
+    end
   end
 
   # Private
@@ -123,5 +174,14 @@ defmodule GameServer do
     |> String.split("\r\n")
     |> Enum.dedup()
     |> Enum.take(@deck_size)
+    |> Enum.map(&create_card/1)
+  end
+
+  defp create_card(str) do
+    %Card{word: str, points: String.length(str) * 5}
+  end
+
+  defp find_player(players, name) do
+    players |> Enum.filter(&(&1.name == name)) |> List.first()
   end
 end

@@ -1,4 +1,4 @@
-defmodule KV.Supervisor do
+defmodule App.Supervisor do
   use Supervisor
 
   def start_link(opts) do
@@ -7,8 +7,8 @@ defmodule KV.Supervisor do
 
   def init(:ok) do
     children = [
-      {KV.Registry, name: KV.Registry},
-      {GameServer, name: GameServer}
+      {App.Registry, name: Registry},
+      {App.GameServer, name: GameServer}
     ]
 
     Supervisor.init(children, strategy: :one_for_one)

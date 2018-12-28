@@ -1,4 +1,4 @@
-defmodule KV.Bucket do
+defmodule App.Bucket do
   use Agent
 
   @doc """
