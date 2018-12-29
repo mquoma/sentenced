@@ -7,63 +7,70 @@ defmodule App.GameServer do
   @hand_size 10
 
   # Client
-  def start_link(opts) do
-    GenServer.start_link(__MODULE__, %Game{players: [], deck: load_words()}, opts)
+  def start_link(game_name) do
+    GenServer.start_link(
+      __MODULE__,
+      %Game{players: [], deck: load_words()},
+      {:via, App.GameRegistry, {:game_room, game_name}}
+    )
   end
 
   def start_link(_) do
     {:error, :bad_input}
   end
 
-  def discard(pid, card) do
-    GenServer.cast(pid, {:discard, card})
+  def discard(game, card) do
+    GenServer.cast({:via, :gproc, {:n, :l, {:game, game}}}, {:discard, card})
   end
 
-  def draw_card(pid) do
-    GenServer.call(pid, :draw_card)
+  def draw_card(game) do
+    GenServer.call({:via, :gproc, {:n, :l, {:game, game}}}, :draw_card)
   end
 
-  def draw_hand(pid) do
-    GenServer.call(pid, :draw_hand)
+  def draw_hand(game) do
+    GenServer.call({:via, :gproc, {:n, :l, {:game, game}}}, :draw_hand)
   end
 
-  def get(pid) do
-    GenServer.call(pid, :get)
+  def get(game) do
+    GenServer.call({:via, :gproc, {:n, :l, {:game, game}}}, :get)
   end
 
-  def get_player(pid, name) do
-    GenServer.call(pid, {:get_player, name})
+  def get_player(game, name) do
+    GenServer.call({:via, :gproc, {:n, :l, {:game, game}}}, {:get_player, name})
   end
 
-  def get_leaders(pid) do
-    GenServer.call(pid, :get_leaders)
+  def get_leaders(game) do
+    GenServer.call({:via, :gproc, {:n, :l, {:game, game}}}, :get_leaders)
   end
 
-  def get_score(pid, name) do
-    GenServer.call(pid, {:get_score, name})
+  def get_score(game, name) do
+    GenServer.call({:via, :gproc, {:n, :l, {:game, game}}}, {:get_score, name})
   end
 
-  def add_player(pid, name) do
-    GenServer.call(pid, :draw_hand)
+  def add_player(game, name) do
+    GenServer.call({:via, :gproc, {:n, :l, {:game, game}}}, :draw_hand)
     |> case do
       [] ->
         {:reply, :out_of_cards}
 
       hand ->
-        GenServer.cast(pid, {:add_player, %Player{name: name, cards: hand}})
+        GenServer.cast(
+          {:via, :gproc, {:n, :l, {:game, game}}},
+          {:add_player, %Player{name: name, cards: hand}}
+        )
     end
   end
 
-  def meld_card(pid, name, word) do
-    GenServer.cast(pid, {:meld_card, name, word})
+  def meld_card(game, name, word) do
+    GenServer.cast({:via, :gproc, {:n, :l, {:game, game}}}, {:meld_card, name, word})
   end
 
-  def upvote(pid, name) do
-    GenServer.cast(pid, {:upvote, name})
+  def upvote(game, name) do
+    GenServer.cast({:via, :gproc, {:n, :l, {:game, game}}}, {:upvote, name})
   end
 
-  def downvote(pid, name) do
-    GenServer.cast(pid, {:downvote, name})
+  def downvote(game, name) do
+    GenServer.cast({:via, :gproc, {:n, :l, {:game, game}}}, {:downvote, name})
   end
 
   # Callbacks

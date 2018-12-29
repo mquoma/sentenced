@@ -14,7 +14,7 @@ defmodule KV.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger],
+      extra_applications: [:logger, :gproc],
       mod: {App, []}
     ]
   end
@@ -22,7 +22,8 @@ defmodule KV.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:vex, "~> 0.8.0"}
+      {:vex, "~> 0.8.0"},
+      {:gproc, "0.3.1"}
     ]
   end
 end
