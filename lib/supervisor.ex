@@ -7,7 +7,7 @@ defmodule App.Supervisor do
 
   def init(:ok) do
     children = [
-      {App.GameServer, name: GameServer}
+      worker(App.GameServer, [])
 
       # Supervisor.child_spec({App.GameServer, name: GameServer}, id: :game1),
       # Supervisor.child_spec({App.GameServer, name: GameServer2}, id: :game2)

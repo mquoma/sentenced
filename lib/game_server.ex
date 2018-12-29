@@ -7,11 +7,11 @@ defmodule App.GameServer do
   @hand_size 10
 
   # Client
-  def start_link(game_name) do
+  def start_link(game) do
     GenServer.start_link(
       __MODULE__,
       %Game{players: [], deck: load_words()},
-      {:via, App.GameRegistry, {:game_room, game_name}}
+      name: {:via, :gproc, {:n, :l, {:game, game}}}
     )
   end
 
